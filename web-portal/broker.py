@@ -7,7 +7,7 @@ import ConfigParser
 import BaseHTTPServer
 
 config = ConfigParser.ConfigParser()
-config.read('ovirt.conf')
+config.read('zstack.conf')
 
 hostName = config.get('Server', 'HostName')
 portNumber = config.getint('Server', 'PortNumber')

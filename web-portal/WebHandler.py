@@ -1,4 +1,4 @@
-import OVirtDispatcher
+import zstackdispatch
 
 import cgi
 import BaseHTTPServer
