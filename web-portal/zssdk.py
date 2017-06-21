@@ -209,7 +209,7 @@ class AbstractAction(object):
         context_path = __config__.get(CONFIG_CONTEXT_PATH, None)
         if context_path is not None:
             elements.append(context_path)
-        elements.append('/v1')
+        elements.append('/zstack/v1')
 
         path = self.PATH.replace('{', '${')
         unresolved = re.findall('${(.+?)}', path)

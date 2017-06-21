@@ -4,55 +4,60 @@ import json
 import requests
 import zssdk
 
-cur_session = None
+adminSession = None
 
-class OVirtDispatcher(object):
+class zstackdispatcher(object):
 
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
         self.config.read('zstack.conf')
-        self.baseUrl = self.config.get('ZStack', 'ManagerIP')
-        self.password = self.config.get('ZStack', 'AdminPassword')
+        self.managerip= self.config.get('ZStack', 'ManagerIP')
+        self.adminpassword = self.config.get('ZStack', 'AdminPassword')
 
-    def login(self):
-        global cur_session
+    def login(self, username, password):
+        global adminSession
         try:
             zssdk.configure(hostname=self.managerip, port=8080, polling_interval=0.1)
+            loginAction= zssdk.LogInByAccountAction()
+            loginAction.accountName = username
+            loginAction.password = hashlib.sha512(password).hexdigest()
+            userSession = loginAction.call()
+            if userSession.error:
+                return False, userSession.error.details
 
-            login_action= zssdk.LogInByAccountAction()
-            login_action.accountName = 'admin'
-            login_action.password = hashlib.sha512(self.password).hexdigest()
-            cur_session = login_action.call()
+            loginAction= zssdk.LogInByAccountAction()
+            loginAction.accountName = 'admin'
+            loginAction.password = hashlib.sha512(self.adminpassword).hexdigest()
+            adminSession = loginAction.call()
+            if adminSession.error:
+                return False, userSession.error.details
 
-        except exception as conErr:
-            return False, "Bad connection."
+        except Exception as conErr:
+            return False, conErr
         return True, ''
 
-    def getUserVms(self):
-        global cur_session
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        session_auth = 'OAuth {0}'.format(cur_session)
-        headers['Authorization'] = session_auth
-        url = self.baseUrl + "/zstack/v1/vm-instances?type=UserVm"
-        r = requests.get(url, headers=headers)
-        vms = json.loads(r.content)
+    def getUserVms(self, username):
+        global adminSession
+        action = zssdk.QueryVmInstanceAction()
+        action.sessionId = adminSession.value.inventory.uuid
+        action.conditions = ["type=UserVm"]
+        res = action.call()
         
         return vms
 
     def getVmById(self, id):
-        global cur_session
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        session_auth = 'OAuth {0}'.format(cur_session)
-        headers['Authorization'] = session_auth
-        url = self.baseUrl + "/zstack/v1/vm-instances/" + id + "/"
-        r = requests.get(url, headers=headers)
-        vm = json.loads(r.content)
+        global adminSession
+        action = zssdk.QueryVmInstanceAction()
+        action.sessionId = adminSession.value.inventory.uuid
+        action.conditions = ["uuid={0}".format(id)]
+        
+
         return api.vms.get(id)
 
     def startVm(self, vmid):
-        global cur_session
+        global adminSession
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        session_auth = 'OAuth {0}'.format(cur_session)
+        session_auth = 'OAuth {0}'.format(adminSession)
         headers['Authorization'] = session_auth
         try:
             url = self.baseUrl + "/zstack/v1/vm-instances/" + id + "action"
@@ -84,4 +89,4 @@ class OVirtDispatcher(object):
             raise Exception('Connection Error', '')
 
     def consolevv(self, vmid):
-        global cur_session
+        global adminSession

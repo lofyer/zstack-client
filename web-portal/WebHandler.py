@@ -1,13 +1,10 @@
-import zstackdispatch
+import zstackdispatcher
 
 import cgi
 import BaseHTTPServer
 
 dispatcher = None
 
-'''
-WebHandler: simple Web Server
-'''
 class WebHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.send_response(200)
@@ -87,10 +84,7 @@ class WebHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 vm = dispatcher.getVmById(vmid)
                 display = vm.get_display()
 
-                if self.headers['user-agent'].lower().find('windows') >= 0:
-                    html = self._ticketIE(display.get_address(), display.get_port(), value)
-                else:
-                    html = self._ticketFirefox(display.get_address(), display.get_port(), value)
+                html = self._ticket(display.get_address(), display.get_port(), value)
             except Exception as e:
                 reason, detail = e.args
                 html = self._failed_action(reason, detail)
@@ -105,54 +99,21 @@ class WebHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         self.wfile.write(html)
 
-    def _ticketIE(self, host, port, password):
-        html = '''<html>
-   <script>
-       function onConnect() {
-           spice.HostIP = '%s';
-           spice.Port = '%s';
-           spice.Password = '%s'
-           spice.Connect();
-       }
-   </script>
-<body>
-    VMs ticket set:
-    <br/>
-    <OBJECT style='visibility: hidden' codebase='SpiceX.cab#version=1,0,0,1' ID='spice' CLASSID='CLSID:ACD6D89C-938D-49B4-8E81-DDBD13F4B48A'>
-    </OBJECT>
-    <form>
-        <input type=button onclick='javascript:onConnect();' value='Connect'/>
+    def _ticket(self, host, port, password):
+        f = open("/tmp/console.vv", 'w+')
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        print(self.wfile)
+        self.wfile.write("<html><head><title>Title goes here.</title></head>")
+        self.wfile.close()
+        html = '''
     </form>
     <button onclick=javascript:location.href='/uservms'>Back</button>
 </body>
 </html>''' % (host, port, password)
 
         return html
-
-    def _ticketFirefox(self, host, port, password):
-        html = '''<html>
-   <script>
-       function onConnect() {
-            spice.hostIP = '%s';
-            spice.port = '%s';
-            spice.Password = '%s';
-            spice.connect();
-            spice.show()
-       }
-   </script>
-<body>
-    VMs ticket set:
-    <br/>
-    <embed id='spice' type="application/x-spice" width=0 height=0><br>
-    <form>
-        <input type=button value='Connent' onclick='onConnect()'/>
-    </form>
-    <button onclick=javascript:location.href='/uservms'>Back</button>
-</body>
-</html>''' % (host, port, password)
-
-        return html
-
 
     def _uservms_method(self):
         global dispatcher
@@ -181,7 +142,7 @@ class WebHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         for vm in vms:
             startbtn = "<button onclick=javascript:location.href='action?vmid=%s&action=start' type='button'>Start</button>" % (vm.get_id())
             stopbtn = "<button onclick=javascript:location.href='action?vmid=%s&action=stop' type='button'>Stop</button>" % (vm.get_id())
-            connectbtn = "<button onclick=javascript:location.href='action?vmid=%s&action=ticket' type='button'>Console</button>" % (vm.get_id())
+            connectbtn = "<button onclick=javascript:location.href='action?vmid=%s&action=ticket' type='button'>SpiceConsole</button>" % (vm.get_id())
 
             html = html + '''       <tr>
             <td>%s</td>
@@ -210,7 +171,7 @@ class WebHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         global dispatcher
         message = ''
         if form.has_key("username") and form.has_key('password'):
-            dispatcher = OVirtDispatcher.OVirtDispatcher()
+            dispatcher = zstackdispatcher.zstackdispatcher()
             loggedin, message = dispatcher.login(form.getvalue("username"), form.getvalue("password"))
 
             if loggedin:
