@@ -130,6 +130,7 @@ class zstackdispatcher(object):
     def genConsolevv(self, vmid):
         global adminSession
         try:
+            # Spice
             vmInfo = self.getConsoleById(vmid)
             vvFile = '''[virt-viewer]
 type=spice
@@ -146,6 +147,18 @@ enable-smartcard=1
 enable-usb-autoshare=1
 usb-filter=-1,-1,-1,-1,0'''.format(vmInfo["hostIp"],vmInfo["port"])
             return vvFile
+            # VNC
+'''[virt-viewer]
+type=vnc
+host={0}
+port={1}
+password=mMdOz7N0oILE
+delete-this-file=1
+fullscreen=1
+title=win10:%d
+toggle-fullscreen=shift+f11
+release-cursor=shift+f12
+secure-attention=ctrl+alt+end'''.format(vmInfo["hostIp"],vmInfo["port"])
         except Exception as e:
             return e
 
@@ -177,7 +190,7 @@ disable menu anims:i:1
 disable themes:i:0
 disable cursor setting:i:0
 bitmapcachepersistenable:i:1
-full address:s:192.168.0.200
+full address:s:{0}
 audiomode:i:0
 redirectprinters:i:1
 redirectcomports:i:1
