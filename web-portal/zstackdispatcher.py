@@ -148,17 +148,6 @@ enable-usb-autoshare=1
 usb-filter=-1,-1,-1,-1,0'''.format(vmInfo["hostIp"],vmInfo["port"])
             return vvFile
             # VNC
-'''[virt-viewer]
-type=vnc
-host={0}
-port={1}
-password=mMdOz7N0oILE
-delete-this-file=1
-fullscreen=1
-title=win10:%d
-toggle-fullscreen=shift+f11
-release-cursor=shift+f12
-secure-attention=ctrl+alt+end'''.format(vmInfo["hostIp"],vmInfo["port"])
         except Exception as e:
             return e
 

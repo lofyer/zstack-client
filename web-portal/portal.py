@@ -110,11 +110,19 @@ def action():
     elif action == "consolevv":
         vvFile = dispatcher.genConsolevv(vmid)
         response = make_response(vvFile)
+        #response.headers["Content-Type"] = "Application/octet-stream"
+        response.headers["X-Application-Context"] = "application:development:9000"
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS, DELETE"
+        response.headers["Access-Control-Max-Age"] = "3600"
+        response.headers["Content-Type"] = "Application/x-vv;charset=ISO-8859-1"
         response.headers["Content-Disposition"] = "attachment; filename=console.vv"
         return response
     elif action == "rdp":
         rdpFile = dispatcher.genRdp(vmid)
         response = make_response(rdpFile)
+        response.headers["Content-Type"] = "Application/x-rdp"
         response.headers["Content-Disposition"] = "attachment; filename=Default.rdp"
         return response
 
